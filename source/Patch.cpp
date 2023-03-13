@@ -2,14 +2,18 @@
 #include "pch.h"
 
 #include <fstream>
+#include <sstream>
+#include <stdio.h>
 
 #include "utilities/Helper/Helper.h"
 #include "utilities/Helper/Logger.h"
 
 namespace Patch_Logger {
 	Logging::Logger logger("MAIN");
+	Logging::Logger guiLogger("S4 GUI");
 }
 using Patch_Logger::logger;
+using Patch_Logger::guiLogger;
 
 #include "Patch.h"
 
@@ -50,8 +54,19 @@ namespace S4 {
 	DWORD mode4Y = 0x265B40 + 0x24;
 }
 
+DWORD GuiEngine_SetText = 0x26C0;
+
 HMODULE getGFXAddress() {
 	return getModuleAddress("GfxEngine.dll");
+}
+
+HMODULE getGuiAddress() {
+	return getModuleAddress("GuiEngine2.dll");
+}
+
+void showHeaderMessage() {
+	logger.naked() << "Widescreen Patch for Settlers IV Gold by zocker_160 v"
+		<< ver_maj << "." << ver_min << "\n" << std::endl;
 }
 
 void writeResolutionTuple(const char* name, HMODULE module, Resolution res, DWORD res1, DWORD res2) {
@@ -76,13 +91,27 @@ void patchResolutions(ConfigData* cf) {
 
 	// set Res Mode 3 to native desktop resolution
 	int hor, ver;
-	getDesktopResolution2(hor, ver);
+	if (isWine()) {
+		logger.debug("WINE detected");
+
+		hor = cf->linuxResolutionMax.x;
+		ver = cf->linuxResolutionMax.y;
+	}
+	else {
+		getDesktopResolution2(hor, ver);
+
+		logger.debug() << "Detected desktop resolution: "
+			<< hor << " x " << ver << std::endl;
+	}
 	Resolution desktopRes = { hor, ver };
 
 	writeResolutionTuple("Res Mode 3 GFX", getGFXAddress(),
 		desktopRes, GfxEngine::mode3X, GfxEngine::mode3Y);
 	writeResolutionTuple("Res Mode 3 EXE", getBaseAddress(),
 		desktopRes, S4::mode3X, S4::mode3Y);
+
+	logger.info("creating GUI hook...");
+	createGuiHook(cf->customResolution, desktopRes);
 
 	logger.info("resolution patch done");
 }
@@ -103,4 +132,113 @@ void patchVideoSkip(char* path, ConfigData* cf) {
 	f.close();
 
 	logger.info("video skip patch done");
+}
+
+int param1;
+int param2;
+char* param3;
+DWORD jmpBackAddr;
+void __declspec(naked) setText(){
+	__asm {
+		push eax
+
+		mov eax, [esp+0x8+0x4]
+		mov [param1], eax
+
+		mov eax, [esp+0xC+0x4]
+		mov [param2], eax
+
+		mov eax, [esp+0x4+0x4]
+		mov [param3], eax
+
+		pop eax
+		pushad
+	}
+	std::cout << param1 << " "
+		<< param2 << " "
+		<< param3 << " " << *param3 << " "
+		<< *(int*)param3 << " "
+		<< *(short*)param3 << " "
+		<< std::endl;
+	__asm {
+		popad
+
+		push ebx
+		xor ebx, ebx
+		push ebp
+		push esi
+
+		jmp [jmpBackAddr]
+	}
+}
+
+Resolution resMode2;
+Resolution resMode3;
+const char defMode2[] = "1024 x 768";
+const char defMode3[] = "1280 x 1024";
+int strLength;
+char* string;
+char newString[20];
+DWORD jmpBackAddr2;
+void _textUpdated() {
+	if (strLength == 10 || strLength == 11) {
+		if (strncmp(defMode2, string, strLength) == 0) {
+			std::stringstream ss;
+			ss << resMode2.x << " x " << resMode2.y << " custom";
+			auto ns = ss.str();
+
+			guiLogger.debug() << string << " (" << strLength << ") -> ";
+
+			strLength = ns.length();
+			strncpy_s(newString, ns.c_str(), strLength);
+			string = newString;
+
+			guiLogger.naked() << string << " (" << strLength << ")" << std::endl;
+		}
+		else if (strncmp(defMode3, string, strLength) == 0) {
+			std::stringstream ss;
+			ss << resMode3.x << " x " << resMode3.y << " native";
+			auto ns = ss.str();
+
+			guiLogger.debug() << string << " (" << strLength << ") -> ";
+
+			strLength = ns.length();
+			strncpy_s(newString, ns.c_str(), strLength);
+			string = newString;
+
+			guiLogger.naked() << string << " (" << strLength << ")" << std::endl;
+		}
+	}
+}
+void __declspec(naked) textUpdated() {
+	__asm {
+		mov [strLength], edi
+		mov [string], ebp
+
+		pushad
+	}
+	_textUpdated();
+	__asm {
+		popad 
+
+		mov edi, [strLength]
+		mov ebp, [string]
+
+		push edi
+		push ebp
+		lea eax, [eax+eax*2]
+
+		jmp [jmpBackAddr2]
+	}
+}
+
+void createGuiHook(Resolution mode2, Resolution mode3) {
+	resMode2 = mode2;
+	resMode3 = mode3;
+
+	//DWORD addr = (DWORD)getGuiAddress() + GuiEngine_SetText + 6;
+	//functionInjectorReturn((DWORD*)addr, setText, jmpBackAddr, 5);
+
+	DWORD addr = (DWORD)getGuiAddress() + GuiEngine_SetText + 0x1CC;
+	functionInjectorReturn((DWORD*)addr, textUpdated, jmpBackAddr2, 5);
 }

@@ -19,6 +19,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         char configPath[MAX_PATH];
         getGameDirectory(hModule, configPath, MAX_PATH, "\\WidescreenFix.ini", 0);
 
+        char logPath[MAX_PATH];
+        getGameDirectory(hModule, logPath, MAX_PATH, "\\WidescreenFix.log", 0);
+
         char videoCFG[MAX_PATH];
         getGameDirectory(hModule, videoCFG, MAX_PATH, "\\Config\\Video.cfg", 1);
 
@@ -27,7 +30,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
         ConfigData* configData = loadConfig(config);
 
-        Logging::Logger logger("ENTR", configData->bDebugWindow);
+        Logging::Logger logger("ENTR", logPath, configData->bDebugWindow);
+        showHeaderMessage();
+        logger.debug() << "log path: " << logPath << std::endl;
         logger.debug() << "config path: " << configPath << std::endl;
 
         logger.info("Widescreen Patch loaded");

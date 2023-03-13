@@ -9,6 +9,7 @@ struct Resolution {
 
 struct ConfigData {
 	Resolution customResolution;
+	Resolution linuxResolutionMax;
 	bool bSoftwareMode;
 	bool bSkipIntro;
 	bool bDebugWindow;
