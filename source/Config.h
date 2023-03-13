@@ -8,8 +8,8 @@ struct Resolution {
 };
 
 struct ConfigData {
-	Resolution resMode2;
-	Resolution resMode3;
+	Resolution customResolution;
+	bool bSoftwareMode;
 	bool bSkipIntro;
 	bool bDebugWindow;
 };

@@ -19,6 +19,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         char configPath[MAX_PATH];
         getGameDirectory(hModule, configPath, MAX_PATH, "\\WidescreenFix.ini", 0);
 
+        char videoCFG[MAX_PATH];
+        getGameDirectory(hModule, videoCFG, MAX_PATH, "\\Config\\Video.cfg", 1);
+
         config.SetUnicode();
         config.LoadFile(configPath);
 
@@ -29,8 +32,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
         logger.info("Widescreen Patch loaded");
 
+        patchVideoSkip(videoCFG, configData);
         patchResolutions(configData);
 
+        logger.info("Patching done!");
         break;
     }
     case DLL_PROCESS_DETACH:

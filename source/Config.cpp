@@ -4,17 +4,13 @@
 
 ConfigData* loadConfig(CSimpleIni& ini) {
 	auto* configData = new ConfigData;
-	Resolution resMode2 = {
-		ini.GetLongValue("ResMode2", "xRes", 1024),
-		ini.GetLongValue("ResMode2", "yRes", 768)
-	};
-	Resolution resMode3 = {
-		ini.GetLongValue("ResMode3", "xRes", 1280),
-		ini.GetLongValue("ResMode3", "yRes", 1024)
+	Resolution res = {
+		ini.GetLongValue("Resolution", "xRes", 1024),
+		ini.GetLongValue("Resolution", "yRes", 768)
 	};
 
-	configData->resMode2 = resMode2;
-	configData->resMode3 = resMode3;
+	configData->customResolution = res;
+	configData->bSoftwareMode = ini.GetBoolValue("Misc", "SoftwareMode");
 	configData->bSkipIntro = ini.GetBoolValue("Misc", "SkipIntroVideos");
 	configData->bDebugWindow = ini.GetBoolValue("Debug", "DebugWindow");
 
