@@ -1,0 +1,17 @@
+LIBRARY ddraw
+EXPORTS
+	AcquireDDThreadLock=FakeAcquireDDThreadLock @1
+	CompleteCreateSysmemSurface=FakeCompleteCreateSysmemSurface @2
+	D3DParseUnknownCommand=FakeD3DParseUnknownCommand @3
+	DDInternalLock=FakeDDInternalLock @4
+	DDInternalUnlock=FakeDDInternalUnlock @5
+	DirectDrawCreate=FakeDirectDrawCreate @6
+	DirectDrawCreateClipper=FakeDirectDrawCreateClipper @7
+	DirectDrawCreateEx=FakeDirectDrawCreateEx @8
+	DirectDrawEnumerateA=FakeDirectDrawEnumerateA @9
+	DirectDrawEnumerateExA=FakeDirectDrawEnumerateExA @10
+	DirectDrawEnumerateExW=FakeDirectDrawEnumerateExW @11
+	DirectDrawEnumerateW=FakeDirectDrawEnumerateW @12
+	DllCanUnloadNow=FakeDllCanUnloadNow @13
+	DllGetClassObject=FakeDllGetClassObject @14
+	ReleaseDDThreadLock=FakeReleaseDDThreadLock @15

@@ -10,4 +10,4 @@ void showHeaderMessage();
 void patchResolutions(ConfigData* cf);
 void patchVideoSkip(char* path, ConfigData* cf);
 
-void createGuiHook(Resolution mode2, Resolution mode3);
+void createGuiHook(Resolution mode2, Resolution mode3, bool mode3custom);

@@ -85,17 +85,17 @@ void patchResolutions(ConfigData* cf) {
 	logger.info("resolution patch...");
 
 	writeResolutionTuple("Res Mode 2 GFX", getGFXAddress(),
-		cf->customResolution, GfxEngine::mode2X, GfxEngine::mode2Y);
+		cf->customResolution2, GfxEngine::mode2X, GfxEngine::mode2Y);
 	writeResolutionTuple("Res Mode 2 EXE", getBaseAddress(),
-		cf->customResolution, S4::mode2X, S4::mode2Y);
+		cf->customResolution2, S4::mode2X, S4::mode2Y);
 
-	// set Res Mode 3 to native desktop resolution
+	// set Res Mode 3
 	int hor, ver;
-	if (isWine()) {
-		logger.debug("WINE detected");
+	if (cf->bCustomRes3) {
+		logger.debug("Custom resolution 3 override enabled");
 
-		hor = cf->linuxResolutionMax.x;
-		ver = cf->linuxResolutionMax.y;
+		hor = cf->customResolution3.x;
+		ver = cf->customResolution3.y;
 	}
 	else {
 		getDesktopResolution2(hor, ver);
@@ -111,7 +111,7 @@ void patchResolutions(ConfigData* cf) {
 		desktopRes, S4::mode3X, S4::mode3Y);
 
 	logger.info("creating GUI hook...");
-	createGuiHook(cf->customResolution, desktopRes);
+	createGuiHook(cf->customResolution2, desktopRes, cf->bCustomRes3);
 
 	logger.info("resolution patch done");
 }
@@ -174,6 +174,7 @@ void __declspec(naked) setText(){
 
 Resolution resMode2;
 Resolution resMode3;
+bool resMode3custom;
 const char defMode2[] = "1024 x 768";
 const char defMode3[] = "1280 x 1024";
 int strLength;
@@ -197,7 +198,11 @@ void _textUpdated() {
 		}
 		else if (strncmp(defMode3, string, strLength) == 0) {
 			std::stringstream ss;
-			ss << resMode3.x << " x " << resMode3.y << " native";
+			ss << resMode3.x << " x " << resMode3.y;
+			if (resMode3custom)
+				ss << " custom";
+			else
+				ss << " native";
 			auto ns = ss.str();
 
 			guiLogger.debug() << string << " (" << strLength << ") -> ";
@@ -232,9 +237,10 @@ void __declspec(naked) textUpdated() {
 	}
 }
 
-void createGuiHook(Resolution mode2, Resolution mode3) {
+void createGuiHook(Resolution mode2, Resolution mode3, bool mode3custom) {
 	resMode2 = mode2;
 	resMode3 = mode3;
+	resMode3custom = mode3custom;
 
 	//DWORD addr = (DWORD)getGuiAddress() + GuiEngine_SetText + 6;
 	//functionInjectorReturn((DWORD*)addr, setText, jmpBackAddr, 5);
