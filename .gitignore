@@ -1,5 +1,6 @@
 .directory
 .vs
+data/dg*
 build/
 
 *.sln
