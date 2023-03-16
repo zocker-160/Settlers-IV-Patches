@@ -6,3 +6,4 @@ build/
 *.sln
 *.vcx*
 *.zip
+*.dll
