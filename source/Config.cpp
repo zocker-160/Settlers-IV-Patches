@@ -17,7 +17,7 @@ ConfigData* loadConfig(CSimpleIni& ini) {
 	configData->customResolution3 = res3;
 	configData->bCustomRes3 = ini.GetBoolValue("Resolution3", "enabled");
 	configData->bSoftwareMode = ini.GetBoolValue("Misc", "SoftwareMode");
-	configData->bSkipIntro = ini.GetBoolValue("Misc", "SkipIntroVideos");
+	configData->bSkipIntro = ini.GetBoolValue("Misc", "SkipVideos");
 	configData->bDebugWindow = ini.GetBoolValue("Debug", "DebugWindow");
 
 	return configData;
