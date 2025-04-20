@@ -14,6 +14,7 @@ struct ConfigData {
 	bool bSoftwareMode;
 	bool bSkipIntro;
 	bool bDebugWindow;
+	bool bNativeDX;
 };
 
 ConfigData* loadConfig(CSimpleIni& ini);

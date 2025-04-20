@@ -3,7 +3,7 @@
 
 
 ConfigData* loadConfig(CSimpleIni& ini) {
-	auto* configData = new ConfigData;
+	auto configData = new ConfigData;
 	Resolution res2 = {
 		ini.GetLongValue("Resolution", "xRes", 1024),
 		ini.GetLongValue("Resolution", "yRes", 768)
@@ -18,6 +18,7 @@ ConfigData* loadConfig(CSimpleIni& ini) {
 	configData->bCustomRes3 = ini.GetBoolValue("Resolution3", "enabled");
 	configData->bSoftwareMode = ini.GetBoolValue("Misc", "SoftwareMode");
 	configData->bSkipIntro = ini.GetBoolValue("Misc", "SkipVideos");
+	configData->bNativeDX = ini.GetBoolValue("Misc", "UseNativeDX");
 	configData->bDebugWindow = ini.GetBoolValue("Debug", "DebugWindow");
 
 	return configData;
