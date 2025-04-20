@@ -1,5 +1,6 @@
 .directory
 .vs
+.vscode
 data/dg*
 build/
 
