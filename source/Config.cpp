@@ -1,6 +1,8 @@
 
 #include "Config.h"
+#include "Helper.h"
 
+#include <stdio.h>
 
 ConfigData* loadConfig(CSimpleIni& ini) {
 	auto configData = new ConfigData;
@@ -22,4 +24,15 @@ ConfigData* loadConfig(CSimpleIni& ini) {
 	configData->bDebugWindow = ini.GetBoolValue("Debug", "DebugWindow");
 
 	return configData;
+}
+
+bool isGameVersionSupported(char *executable) {
+	std::string checksum;
+
+	if (!getFileChecksum(executable, checksum)) {
+		return false;
+	}
+
+	return checksum == "edf54528e2bb9e5c757918f44026c1edb3f092abc9af0957a2cc2330971a17bb" 
+		|| checksum == "4b1670e105a2e75da73f6248d8ac88264543c5480b3fa19066a3d61d95ce29b1";
 }

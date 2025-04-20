@@ -71,14 +71,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     {
     case DLL_PROCESS_ATTACH:
     {
+        HMODULE baseModule = getBaseModule();
+
+        char mainExecutable[MAX_PATH];
+        GetModuleFileNameA(baseModule, mainExecutable, MAX_PATH);
+
         char configPath[MAX_PATH];
-        getGameDirectory(hModule, configPath, MAX_PATH, "\\WidescreenFix.ini", 0);
+        getGameDirectory(baseModule, configPath, MAX_PATH, "\\WidescreenFix.ini", 0);
 
         char logPath[MAX_PATH];
-        getGameDirectory(hModule, logPath, MAX_PATH, "\\WidescreenFix.log", 0);
+        getGameDirectory(baseModule, logPath, MAX_PATH, "\\WidescreenFix.log", 0);
 
         char videoCFG[MAX_PATH];
-        getGameDirectory(hModule, videoCFG, MAX_PATH, "\\Config\\Video.cfg", 1);
+        getGameDirectory(baseModule, videoCFG, MAX_PATH, "\\Config\\Video.cfg", 1);
 
 
         CSimpleIni config;
@@ -92,6 +97,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         logger.debug() << "log path: " << logPath << std::endl;
         logger.debug() << "config path: " << configPath << std::endl;
 
+        logger.info("Checking game version...");
+        if (!isGameVersionSupported(mainExecutable)) {
+            logger.error("Unsupported game version - exiting");
+            MessageBoxA(NULL, "Unsupported game version!", "WidescreenFix", MB_OK);
+            ExitProcess(0);
+        }
+
         logger.info("Applying patches...");
         patchVideoSkip(videoCFG, configData);
         patchResolutions(configData);
@@ -104,7 +116,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             GetSystemDirectoryA(ddrawPath, MAX_PATH);
             strcat_s(ddrawPath, "\\ddraw.dll");
         } else {
-            getGameDirectory(hModule, ddrawPath, MAX_PATH, "\\dgVoodoo.dll", 0);
+            getGameDirectory(baseModule, ddrawPath, MAX_PATH, "\\dgVoodoo.dll", 0);
         }
 
         logger.info() << "Loading " << ddrawPath << std::endl;

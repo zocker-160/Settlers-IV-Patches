@@ -5,8 +5,8 @@
 #include <sstream>
 #include <stdio.h>
 
-#include "utilities/Helper/Helper.h"
-#include "utilities/Helper/Logger.h"
+#include "Helper.h"
+#include "Logger.h"
 
 namespace Patch_Logger {
 	Logging::Logger logger("MAIN");

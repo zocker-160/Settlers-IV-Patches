@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utilities/SimpleIni/SimpleIni.h"
+#include "SimpleIni.h"
 
 struct Resolution {
 	int x;
@@ -18,3 +18,4 @@ struct ConfigData {
 };
 
 ConfigData* loadConfig(CSimpleIni& ini);
+bool isGameVersionSupported(char* executable);
