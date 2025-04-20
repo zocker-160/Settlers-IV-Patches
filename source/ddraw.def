@@ -1,17 +1,17 @@
 LIBRARY ddraw
 EXPORTS
-	AcquireDDThreadLock=FakeAcquireDDThreadLock @1
-	CompleteCreateSysmemSurface=FakeCompleteCreateSysmemSurface @2
-	D3DParseUnknownCommand=FakeD3DParseUnknownCommand @3
-	DDInternalLock=FakeDDInternalLock @4
-	DDInternalUnlock=FakeDDInternalUnlock @5
-	DirectDrawCreate=FakeDirectDrawCreate @6
-	DirectDrawCreateClipper=FakeDirectDrawCreateClipper @7
-	DirectDrawCreateEx=FakeDirectDrawCreateEx @8
-	DirectDrawEnumerateA=FakeDirectDrawEnumerateA @9
-	DirectDrawEnumerateExA=FakeDirectDrawEnumerateExA @10
-	DirectDrawEnumerateExW=FakeDirectDrawEnumerateExW @11
-	DirectDrawEnumerateW=FakeDirectDrawEnumerateW @12
-	DllCanUnloadNow=FakeDllCanUnloadNow @13
-	DllGetClassObject=FakeDllGetClassObject @14
-	ReleaseDDThreadLock=FakeReleaseDDThreadLock @15
+	AcquireDDThreadLock=f_AcquireDDThreadLock @1
+	CompleteCreateSysmemSurface=f_CompleteCreateSysmemSurface @2
+	D3DParseUnknownCommand=f_D3DParseUnknownCommand @3
+	DDInternalLock=f_DDInternalLock @4
+	DDInternalUnlock=f_DDInternalUnlock @5
+	DirectDrawCreate=f_DirectDrawCreate @6
+	DirectDrawCreateClipper=f_DirectDrawCreateClipper @7
+	DirectDrawCreateEx=f_DirectDrawCreateEx @8
+	DirectDrawEnumerateA=f_DirectDrawEnumerateA @9
+	DirectDrawEnumerateExA=f_DirectDrawEnumerateExA @10
+	DirectDrawEnumerateExW=f_DirectDrawEnumerateExW @11
+	DirectDrawEnumerateW=f_DirectDrawEnumerateW @12
+	DllCanUnloadNow=f_DllCanUnloadNow @13
+	DllGetClassObject=f_DllGetClassObject @14
+	ReleaseDDThreadLock=f_ReleaseDDThreadLock @15
