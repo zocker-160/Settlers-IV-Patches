@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utilities/SimpleIni/SimpleIni.h"
+#include "SimpleIni.h"
 
 struct Resolution {
 	int x;
@@ -14,6 +14,8 @@ struct ConfigData {
 	bool bSoftwareMode;
 	bool bSkipIntro;
 	bool bDebugWindow;
+	bool bNativeDX;
 };
 
 ConfigData* loadConfig(CSimpleIni& ini);
+bool isGameVersionSupported(char* executable);

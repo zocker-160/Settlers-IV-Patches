@@ -1,16 +1,19 @@
+
 #include "pch.h"
 
-#include <stdio.h>
-
-#include "utilities/Helper/Logger.h"
-#include "utilities/Helper/Helper.h"
-#include "utilities/SimpleIni/SimpleIni.h"
+#include "Logger.h"
+#include "Helper.h"
+#include "SimpleIni.h"
 
 #include "Config.h"
 #include "Patch.h"
 
-struct ddraw_dll {
-    HMODULE dll;
+#define NAKED __declspec(naked) void
+#define JMP(addr) {_asm{jmp[addr]}}
+#define DLLENTRY(ddraw, func) NAKED f_##func() JMP(ddraw.func)
+#define PROXYADDR(ddraw, module, func) ddraw.func = GetProcAddress(module, #func)
+
+struct ddrawDLL {
     FARPROC AcquireDDThreadLock;
     FARPROC CompleteCreateSysmemSurface;
     FARPROC D3DParseUnknownCommand;
@@ -28,21 +31,39 @@ struct ddraw_dll {
     FARPROC ReleaseDDThreadLock;
 } ddraw;
 
-__declspec(naked) void FakeAcquireDDThreadLock() { _asm { jmp[ddraw.AcquireDDThreadLock] } }
-__declspec(naked) void FakeCompleteCreateSysmemSurface() { _asm { jmp[ddraw.CompleteCreateSysmemSurface] } }
-__declspec(naked) void FakeD3DParseUnknownCommand() { _asm { jmp[ddraw.D3DParseUnknownCommand] } }
-__declspec(naked) void FakeDDInternalLock() { _asm { jmp[ddraw.DDInternalLock] } }
-__declspec(naked) void FakeDDInternalUnlock() { _asm { jmp[ddraw.DDInternalUnlock] } }
-__declspec(naked) void FakeDirectDrawCreate() { _asm { jmp[ddraw.DirectDrawCreate] } }
-__declspec(naked) void FakeDirectDrawCreateClipper() { _asm { jmp[ddraw.DirectDrawCreateClipper] } }
-__declspec(naked) void FakeDirectDrawCreateEx() { _asm { jmp[ddraw.DirectDrawCreateEx] } }
-__declspec(naked) void FakeDirectDrawEnumerateA() { _asm { jmp[ddraw.DirectDrawEnumerateA] } }
-__declspec(naked) void FakeDirectDrawEnumerateExA() { _asm { jmp[ddraw.DirectDrawEnumerateExA] } }
-__declspec(naked) void FakeDirectDrawEnumerateExW() { _asm { jmp[ddraw.DirectDrawEnumerateExW] } }
-__declspec(naked) void FakeDirectDrawEnumerateW() { _asm { jmp[ddraw.DirectDrawEnumerateW] } }
-__declspec(naked) void FakeDllCanUnloadNow() { _asm { jmp[ddraw.DllCanUnloadNow] } }
-__declspec(naked) void FakeDllGetClassObject() { _asm { jmp[ddraw.DllGetClassObject] } }
-__declspec(naked) void FakeReleaseDDThreadLock() { _asm { jmp[ddraw.ReleaseDDThreadLock] } }
+DLLENTRY(ddraw, AcquireDDThreadLock)
+DLLENTRY(ddraw, CompleteCreateSysmemSurface)
+DLLENTRY(ddraw, D3DParseUnknownCommand)
+DLLENTRY(ddraw, DDInternalLock)
+DLLENTRY(ddraw, DDInternalUnlock)
+DLLENTRY(ddraw, DirectDrawCreate)
+DLLENTRY(ddraw, DirectDrawCreateClipper)
+DLLENTRY(ddraw, DirectDrawCreateEx)
+DLLENTRY(ddraw, DirectDrawEnumerateA)
+DLLENTRY(ddraw, DirectDrawEnumerateExA)
+DLLENTRY(ddraw, DirectDrawEnumerateExW)
+DLLENTRY(ddraw, DirectDrawEnumerateW)
+DLLENTRY(ddraw, DllCanUnloadNow)
+DLLENTRY(ddraw, DllGetClassObject)
+DLLENTRY(ddraw, ReleaseDDThreadLock)
+
+void initDLL(HMODULE dll) {
+    PROXYADDR(ddraw, dll, AcquireDDThreadLock);
+    PROXYADDR(ddraw, dll, CompleteCreateSysmemSurface);
+    PROXYADDR(ddraw, dll, D3DParseUnknownCommand);
+    PROXYADDR(ddraw, dll, DDInternalLock);
+    PROXYADDR(ddraw, dll, DDInternalUnlock);
+    PROXYADDR(ddraw, dll, DirectDrawCreate);
+    PROXYADDR(ddraw, dll, DirectDrawCreateClipper);
+    PROXYADDR(ddraw, dll, DirectDrawCreateEx);
+    PROXYADDR(ddraw, dll, DirectDrawEnumerateA);
+    PROXYADDR(ddraw, dll, DirectDrawEnumerateExA);
+    PROXYADDR(ddraw, dll, DirectDrawEnumerateExW);
+    PROXYADDR(ddraw, dll, DirectDrawEnumerateW);
+    PROXYADDR(ddraw, dll, DllCanUnloadNow);
+    PROXYADDR(ddraw, dll, DllGetClassObject);
+    PROXYADDR(ddraw, dll, ReleaseDDThreadLock);
+}
 
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
@@ -50,20 +71,22 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     {
     case DLL_PROCESS_ATTACH:
     {
-        CSimpleIni config;
+        HMODULE baseModule = getBaseModule();
 
-        char ddrawPath[MAX_PATH];
-        getGameDirectory(hModule, ddrawPath, MAX_PATH, "\\dgVoodoo.dll", 0);
+        char mainExecutable[MAX_PATH];
+        GetModuleFileNameA(baseModule, mainExecutable, MAX_PATH);
 
         char configPath[MAX_PATH];
-        getGameDirectory(hModule, configPath, MAX_PATH, "\\WidescreenFix.ini", 0);
+        getGameDirectory(baseModule, configPath, MAX_PATH, "\\WidescreenFix.ini", 0);
 
         char logPath[MAX_PATH];
-        getGameDirectory(hModule, logPath, MAX_PATH, "\\WidescreenFix.log", 0);
+        getGameDirectory(baseModule, logPath, MAX_PATH, "\\WidescreenFix.log", 0);
 
         char videoCFG[MAX_PATH];
-        getGameDirectory(hModule, videoCFG, MAX_PATH, "\\Config\\Video.cfg", 1);
+        getGameDirectory(baseModule, videoCFG, MAX_PATH, "\\Config\\Video.cfg", 1);
 
+
+        CSimpleIni config;
         config.SetUnicode();
         config.LoadFile(configPath);
 
@@ -74,44 +97,38 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         logger.debug() << "log path: " << logPath << std::endl;
         logger.debug() << "config path: " << configPath << std::endl;
 
-        logger.info("Widescreen Patch loaded");
-
-        patchVideoSkip(videoCFG, configData);
-        patchResolutions(configData);
-
-        logger.info("Patching done!");
-
-        logger.info("Loading ddraw...");
-
-        if (isWine()) {
-            logger.debug("WINE detected");
-            ddraw.dll = LoadLibrary(ddrawPath);
-        }
-        else {
-            ddraw.dll = LoadLibrary(ddrawPath);
-        }
-
-        if (ddraw.dll == false) {
-            logger.error() << "Failed to load " << ddrawPath << std::endl;
-            MessageBoxA(NULL, "Failed to load dgVoodoo", "WidescreenFix", MB_ICONERROR);
+        logger.info("Checking game version...");
+        if (!isGameVersionSupported(mainExecutable)) {
+            logger.error("Unsupported game version - exiting");
+            MessageBoxA(NULL, "Unsupported game version!", "WidescreenFix", MB_OK);
             ExitProcess(0);
         }
 
-        ddraw.AcquireDDThreadLock = GetProcAddress(ddraw.dll, "AcquireDDThreadLock");
-        ddraw.CompleteCreateSysmemSurface = GetProcAddress(ddraw.dll, "CompleteCreateSysmemSurface");
-        ddraw.D3DParseUnknownCommand = GetProcAddress(ddraw.dll, "D3DParseUnknownCommand");
-        ddraw.DDInternalLock = GetProcAddress(ddraw.dll, "DDInternalLock");
-        ddraw.DDInternalUnlock = GetProcAddress(ddraw.dll, "DDInternalUnlock");
-        ddraw.DirectDrawCreate = GetProcAddress(ddraw.dll, "DirectDrawCreate");
-        ddraw.DirectDrawCreateClipper = GetProcAddress(ddraw.dll, "DirectDrawCreateClipper");
-        ddraw.DirectDrawCreateEx = GetProcAddress(ddraw.dll, "DirectDrawCreateEx");
-        ddraw.DirectDrawEnumerateA = GetProcAddress(ddraw.dll, "DirectDrawEnumerateA");
-        ddraw.DirectDrawEnumerateExA = GetProcAddress(ddraw.dll, "DirectDrawEnumerateExA");
-        ddraw.DirectDrawEnumerateExW = GetProcAddress(ddraw.dll, "DirectDrawEnumerateExW");
-        ddraw.DirectDrawEnumerateW = GetProcAddress(ddraw.dll, "DirectDrawEnumerateW");
-        ddraw.DllCanUnloadNow = GetProcAddress(ddraw.dll, "DllCanUnloadNow");
-        ddraw.DllGetClassObject = GetProcAddress(ddraw.dll, "DllGetClassObject");
-        ddraw.ReleaseDDThreadLock = GetProcAddress(ddraw.dll, "ReleaseDDThreadLock");
+        logger.info("Applying patches...");
+        patchVideoSkip(videoCFG, configData);
+        patchResolutions(configData);
+        logger.info("Widescreen patches loaded");
+
+        char ddrawPath[MAX_PATH];
+        if (configData->bNativeDX || isWine()) {
+            logger.debug("Using Native DX");
+
+            GetSystemDirectoryA(ddrawPath, MAX_PATH);
+            strcat_s(ddrawPath, "\\ddraw.dll");
+        } else {
+            getGameDirectory(baseModule, ddrawPath, MAX_PATH, "\\dgVoodoo.dll", 0);
+        }
+
+        logger.info() << "Loading " << ddrawPath << std::endl;
+
+        HMODULE dll = LoadLibraryA(ddrawPath);
+        if (dll == false) {
+            logger.error() << "Failed to load " << ddrawPath << std::endl;
+            MessageBoxA(NULL, "DLL load error - check logs", "WidescreenFix", MB_OK);
+            ExitProcess(0);
+        }
+
+        initDLL(dll);
 
         break;
     }

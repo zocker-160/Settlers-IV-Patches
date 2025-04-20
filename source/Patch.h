@@ -3,7 +3,7 @@
 #include "Config.h"
 
 const unsigned int ver_maj = 1;
-const unsigned int ver_min = 0;
+const unsigned int ver_min = 1;
 
 void showHeaderMessage();
 
