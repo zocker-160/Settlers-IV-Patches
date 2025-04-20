@@ -29,5 +29,5 @@ I also found a way to make the custom resolutions show in the in game GUI of the
 
 ### Patched
 
-![3440x1440](images/Screenshot_20230314_003311.png)
-![2560x1440](images/Screenshot_20230310_183518.png)
+![3440x1440](images/Screenshot_20230314_003311.jpg)
+![2560x1440](images/Screenshot_20230310_183518.jpg)
